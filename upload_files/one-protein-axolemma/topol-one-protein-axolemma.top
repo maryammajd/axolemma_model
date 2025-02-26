@@ -1,0 +1,75 @@
+#include "top-one-protein-axolemma/martini_v2.2.itp"
+#define RUBBER_BANDS
+#include "top-one-protein-axolemma/Protein_A.itp"
+#include "top-one-protein-axolemma/DBGS.itp"
+#include "top-one-protein-axolemma/martini_v2.0_CHOL_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DAPC_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DAPE_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DAPS_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DGPE_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DOPC_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DOPE_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DPG1_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DPG3_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DPGS_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DPPC_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_DPSM_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_ions.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PAPC_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PAPE_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PAPI_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PAPS_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PNSM_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_POPC_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_POPE_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_POPI_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_POPS_02.itp"
+#include "top-one-protein-axolemma/martini_v2.0_POSM_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_PRPS_01.itp"
+#include "top-one-protein-axolemma/martini_v2.0_solvents.itp"
+#include "top-one-protein-axolemma/PNGS.itp"
+#include "top-one-protein-axolemma/PNSU.itp"
+#include "top-one-protein-axolemma/PXSU.itp"
+
+[ system ]
+; name
+INSANE! Membrane UpperLeaflet>DPPC:POPC:DOPC:PAPC:DAPC:POPE:DOPE:PAPE:DGPE:DAPE:DPSM:POSM:PNSM:DPGS:DBGS:PNGS:DPG1:DPG3:PXSU:PNSU:CHOL=46.0:30.0:97.0:8.0:7.0:29.0:29.0:8.0:12.0:21.0:14.0:11.0:6.0:70.0:26.0:26.0:18.0:18.0:14.0:24.0:402.0 LowerLeaflet>DPPC:POPC:DOPC:PAPC:DAPC:POPE:DOPE:PAPE:DGPE:DAPE:PAPS:DAPS:PRPS:DPSM:POSM:PNSM:POPI:PAPI:CHOL=30.0:20.0:65.0:6.0:5.0:69.0:69.0:20.0:28.0:49.0:6.0:4.0:40.0:6.0:5.0:2.0:52.0:14.0:422.0 in water
+
+[ molecules ]
+; name  number
+protein_A           1
+DPPC              309
+POPC              201
+DOPC              658
+PAPC               52
+DAPC               48
+POPE              403
+DOPE              398
+PAPE              113
+DGPE              156
+DAPE              278
+DPSM               79
+POSM               58
+PNSM               29
+DPGS              286
+DBGS              102
+PNGS              101
+DPG1               70
+DPG3               69
+PXSU               54
+PNSU               98
+CHOL             3368
+PAPS               22
+DAPS               15
+PRPS              155
+POPI              210
+PAPI               56
+W               208547
+NA+               670
+CL-               477
+NA+               672
+CL-               477
+NA+               672
+CL-               477
+NA+               656
+CL-               491
