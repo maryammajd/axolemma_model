@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 24 10:15:01 2023
+Von mises stress calculation from the pressure of the system
+@author: maryamma
+"""
+import numpy as np
+from math import sqrt
+import matplotlib.pyplot as pyplot
+import scipy.stats as stats
+import statsmodels.api as sm
+from matplotlib.ticker import (MultipleLocator)
+
+
+def xvg_read(dir, var):
+    temp_data = np.genfromtxt(
+        (r for r in open(str(dir) + str(var) + '.xvg') if not r[0] in ('@', '#', '&')))
+    time = temp_data.T[0]
+    data = temp_data.T[1]
+    return time, data
+
+
+def press_to_stress(pxx, pyy, pzz):
+    stress_vm = []
+    if len(pxx) == len(pyy) and len(pxx) == len(pzz):
+        for i in range(len(pxx)):
+            stress_vm.append(
+                sqrt(1/2*((pxx[i]-pyy[i])**2 + (pyy[i]-pzz[i])**2 + (pxx[i]-pzz[i])**2)))
+        return stress_vm
+    else:
+        raise ValueError('Input variables do not have the same size!')
+
+
+def mean_value(data, mean_step):
+    mean_data = []
+    for i in range(1, int((len(data)-1)/mean_step)+1):
+        mean_data.append(np.mean(data[(i-1)*mean_step:i*mean_step]))
+    return mean_data
+
+
+def std_value(data, mean_step):
+    std_data = []
+    for i in range(1, int((len(data)-1)/mean_step)+1):
+        std_data.append(np.std(data[(i-1)*mean_step:i*mean_step]))
+    return std_data
+
+
+def vm_strain(strainx, strainy):
+    strain_vm = []
+    if len(strainx) == len(strainy):
+        for i in range(len(pxx)):
+            strain_vm.append(
+                sqrt(2/9*((strainx[i])**2 + (strainy[i])**2 + (strainx[i]-strainy[i])**2)))
+        return strain_vm
+    else:
+        raise ValueError('Input variables do not have the same size!')
+
+
+# Read all curves for all simulations and append in one array (choose the simulation number )
+models = [0, 1, 2, 3]
+# models = [2]
+string_x0 = [45.02, 45.23, 80.20, 41.76]
+
+# color = pyplot.cm.rainbow(np.linspace(0, 1, 14))
+color = ['#377eb8', '#ff7f00', '#4daf4a',
+         'crimson']
+# color = ['#e9b94b', '#e76a7c', '#11a7a6', '#3d3e38', '#eca265']
+
+models_name = ["Axolemma", "Axolemma-protein", "Node-of-Ranvier", "Myelin"]
+
+fig = pyplot.figure(figsize=(1.2*5, 5), dpi=300)
+
+source_dir = "/run/media/maryamma/One Touch/project_md/"
+# source_dir = "/home/maryam/d/project_md"
+
+for model_number in models:
+    target_value = 0.15
+    x0 = string_x0[model_number]
+    mean_step = 200
+    if model_number == 0:
+        dir = source_dir + '/axl3/5.2/double-after25us/deform/eq20us/fast/'
+        linear_part = [0, 90]
+
+    elif model_number == 1:
+        time, ten, box = [], [], []
+        dir = source_dir + '/CG-axl-prot/large/deform-30us/fast/'
+        linear_part = [0, 45]
+
+    elif model_number == 2:
+        time, ten, box = [], [], []
+        dir = source_dir + '/CG-axl-prot/small/node/deform/fast/'
+        linear_part = [0, 80]
+        mean_step = int(mean_step*2)
+    elif model_number == 3:
+        time, ten, box = [], [], []
+        dir = source_dir + '/paper1/myelin/'
+        linear_part = [1, 27]
+        target_value = 0.125
+        mean_step = int(mean_step/5)
+    else:
+        raise ValueError('error_model_number does not exist.')
+    timex, pxx = xvg_read(dir, 'pxx')
+    timey, pyy = xvg_read(dir, 'pyy')
+    timez, pzz = xvg_read(dir, 'pzz')
+    timeten, ten = xvg_read(dir, 'ten')
+    stress_final = press_to_stress(pxx, pyy, pzz)
+    timebox, box_size = xvg_read(dir, 'box')
+
+    strain_final = np.array(box_size/x0-1)
+    strain_vm = vm_strain(strain_final, np.zeros(len(strain_final)))
+    # print(len(strain_final), len(stress_final))
+    mean_stress = mean_value(stress_final, mean_step)
+    mean_strain = np.array(mean_value(strain_final, mean_step))
+    mean_strain_vm = mean_value(strain_vm, mean_step)
+    mean_ten = np.array(mean_value(ten, mean_step))/10
+    mean_pxx = mean_value(np.array(pxx*-0.1), mean_step)
+    std_pxx = std_value(np.array(pxx*-0.1), mean_step)
+    print(x0)
+
+    target_percent_strain = np.argmin(np.abs(mean_strain - target_value))
+    print(models_name[model_number])
+    # strain_zero_point = max(np.argmin(np.abs(mean_stress)), np.argmin(np.abs(mean_strain)))
+    strain_zero_point = np.argmin(np.abs(mean_strain))
+    print(strain_zero_point)
+    end_point = target_percent_strain
+    # np.min(mean_strain) instead of -0.01
+    x1 = np.linspace(0, mean_strain[end_point])
+
+    used_strain_regression = [0]
+    used_stress_regression = [0]
+    used_stress_regression.extend(mean_pxx[strain_zero_point:end_point])
+    used_strain_regression.extend(mean_strain[strain_zero_point:end_point])
+    model = sm.OLS(used_strain_regression, used_stress_regression)
+    result = model.fit()
+    m, intersection, r_value, p_value, std_err = stats.linregress(
+        used_strain_regression,used_stress_regression)
+    pyplot.plot(x1, m*x1,
+                color=color[model_number], zorder=1, alpha=0.5)
+    pyplot.scatter(mean_strain[end_point],
+                    mean_pxx[end_point], marker='*', color=color[model_number], zorder=1)
+# =============================================================================
+#     pyplot.scatter(mean_strain[end_point],
+#                    m*mean_strain[end_point] + intersection, marker='o', color=color[model_number])
+# =============================================================================
+
+    print('slope =', m, '\nr squared =', r_value**2,
+          # '\ninterception =', intersection, '\np value =', p_value, '\nSD =', std_err, '\n'
+          )
+    # print(f"y = {m}x + {intersection}")
+    print('----------------')
+    name_val = label = models_name[model_number] + \
+        f'; $E = {round(m)} ± {round(r_value**2)} \; MPa$'
+
+    pyplot.scatter(used_strain_regression,
+                   used_stress_regression, s=6, color=color[model_number],
+                   label=name_val)
+    # pyplot.plot(x1, m*x1 + intersection,
+    #             color=color[model_number], zorder=1,
+    #             label=name_val)
+    # Error bars for standard deviations
+# =============================================================================
+#     pyplot.errorbar(mean_strain[strain_zero_point:end_point],
+#                     mean_pxx[strain_zero_point:end_point],
+#                     yerr=std_pxx[strain_zero_point:end_point], linestyle='', color=color[model_number])
+# =============================================================================
+# pyplot.axvline(x=10, color='b', zorder=600)
+# pyplot.xlabel('deformation rate [nm/ps]', size=12)
+pyplot.xlim(0, 0.152)
+minor_locator = MultipleLocator(0.01)
+pyplot.gca().xaxis.set_minor_locator(minor_locator)
+# pyplot.minorticks_on()
+# pyplot.tick_params(which='minor', length=0.01, color='r')
+
+pyplot.xlabel('Strain', size=12)
+pyplot.ylabel('Stress [MPa]', size=12)
+pyplot.legend(loc='upper left')
+pyplot.show()
+
+
+# =============================================================================
+# systems = ['fast/', 'slow/1/', 'slow/2/',
+#            'slow/3/', 'slow2/1/', 'slow2/2/', 'slow2/3/']
+#
+# for system in systems:
+#     print(system)
+#     dir = '/home/maryamma/project/project_md/axl3/5.2/double-after25us/deform/eq20us/' + \
+#         str(system)
+#
+#     timex, pxx = xvg_read(dir, 'pxx')
+#     timey, pyy = xvg_read(dir, 'pyy')
+#     timez, pzz = xvg_read(dir, 'pzz')
+#     timeten, ten = xvg_read(dir, 'ten')
+#     x0 = 46.64
+#     stress_final = press_to_stress(pxx, pyy, pzz)
+#     timebox, box_size = xvg_read(dir, 'box')
+#     strain_final = np.array(box_size/x0-1)
+#     # print(np.zeros(len(strain_final)))
+#     strain_vm = vm_strain(strain_final, np.zeros(len(strain_final)))
+#     print(len(strain_final), len(stress_final))
+#     mean_step = 500
+#     mean_stress = mean_value(stress_final, mean_step)
+#     mean_strain = mean_value(strain_final, mean_step)
+#     mean_strain_vm = mean_value(strain_vm, mean_step)
+#     mean_ten = np.array(mean_value(ten, mean_step))/10
+#     pyplot.errorbar(mean_strain_vm, mean_stress)
+#     # pyplot.errorbar(mean_strain, mean_ten)
+# # pyplot.ylim(10, 25)
+# # pyplot.xlim(0, 0.1)
+# pyplot.show()
+# =============================================================================
